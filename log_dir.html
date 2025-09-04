@@ -1,0 +1,39 @@
+<html>
+    <body>
+        <h1>
+            {{log.name}}
+        </h1>
+        <a href="{{back_path}}">
+            Back
+        </a>
+        <br><br>
+        <div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Type
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for content in contents %}
+                        <tr style="padding: 5px;">
+                            <td>
+                                <a href="/log/{{content.path}}">
+                                    {{content.name}}
+                                </a>
+                            </td>
+                            <td>
+                                {{content.type}}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>

@@ -10,9 +10,10 @@
 - Break log files by specific configurable character to split logs
 - Order by newest or oldest (TODO)
 - Search through logs (TODO)
-- Directory logs (TODO)
-- Read compressed logs (TODO)
+- Directory logs 
+- Read compressed logs
 - Read remote logs (TODO)
+- Dockerised (TODO) (HOW WILL VOLUMES BE PASSED TO IT?)
 
 ## YAML
 ```yaml

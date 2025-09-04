@@ -1,9 +1,10 @@
 import socket
 import select
-import sys
 import os
 import yaml
+import gzip
 from jinja2 import Template
+import traceback
 
 OK_HEADER = """
 HTTP/1.1 200 OK\r
@@ -26,7 +27,10 @@ def load_yaml(yaml_file="./config.yaml"):
                 print(f"String \"{rawhostport}\" cannot be converted to INT")
                 exit()
             hostaddress = (rawhostaddress, hostport)
-            logs = data["logs"]
+            raw_logs = data["logs"]
+            logs = {}
+            for log in raw_logs:
+                logs[log.get("name")] = log
             return hostaddress, logs
     except yaml.YAMLError as e:
         print(f"Error with YAML: {e}")
@@ -37,8 +41,12 @@ def open_file(filename):
         return file.read()
     
 def format_file_contents(log_file, break_symbol):
-    with open(log_file, "r") as file:
-        content = file.read()
+    if ".gz" in log_file:
+        with gzip.open(log_file, 'rb') as file:
+            content = file.read().decode('utf-8')
+    else:
+        with open(log_file, "r") as file:
+            content = file.read()
     if break_symbol == r"\n":
         raw_log_list = content.splitlines()
     else:
@@ -47,25 +55,60 @@ def format_file_contents(log_file, break_symbol):
     for item in raw_log_list:
         log_list.append(item.replace("\n", "<br>\n"))
     log_list.reverse()
-    shortened_log_list = log_list[:50]
-    return shortened_log_list
+    # shortened_log_list = log_list[:50]
+    return log_list
 
 def build_index(logs):
-    with open("index.html.template") as file:
+    with open("index.html") as file:
         template = Template(file.read())
     return OK_HEADER + template.render(logs=logs)
 
-def build_log_page(log):
+def build_log_page(log, back_path="/"):
     log_file = log["logfile"]
-    break_symbol = log.get("breaksymbol", "---")
+    break_symbol = log.get("breaksymbol", r"\n")
     try:
         log_contents = format_file_contents(log_file, break_symbol)
     except FileNotFoundError:
         print(f"File does not exist {log_file}")
         return
-    with open("log.html.template") as file:
+    with open("log.html") as file:
         template = Template(file.read())
-    return OK_HEADER + template.render(log=log, log_contents=log_contents)
+    return OK_HEADER + template.render(log=log, log_contents=log_contents, back_path=back_path)
+
+def build_dir_page(log, file_path, path, back_path = "/"):
+    raw_contents = os.listdir(file_path)
+    contents = []
+    for content in raw_contents:
+        content_real_path = "/".join((path, content))
+        if os.path.isfile(file_path):
+            contents.append({"name": content, "path": content_real_path, "type": "File"})
+        elif os.path.isdir(file_path):
+            contents.append({"name": content, "path": content_real_path, "type": "Dir"})
+    with open("log_dir.html") as file:
+        template = Template(file.read())
+    return OK_HEADER + template.render(log=log, contents=contents, back_path=back_path)
+
+
+def build_log_dir_page(log, path, back_path):
+    log_dir = log["logfile"]
+
+    real_path = "/".join(path.split("/")[1:])
+    file_path = "/".join((log_dir, real_path))
+    # print(f"PATH: {path}")
+    # print(f"REAL: {real_path}")
+    # print(f"FILE: {file_path}")
+    
+    if os.path.isfile(file_path):
+        break_symbol = log.get("breaksymbol", r"\n")
+        log_contents = format_file_contents(file_path, break_symbol)
+        with open("log.html") as file:
+            template = Template(file.read())
+        return OK_HEADER + template.render(log=log, log_contents=log_contents, back_path=back_path)
+    elif os.path.isdir(file_path):
+        return build_dir_page(log, file_path, path, back_path = back_path)
+    else:
+        print("ERROR")
+
 
 if __name__ == "__main__":
     hostaddress, logs = load_yaml()
@@ -78,35 +121,48 @@ if __name__ == "__main__":
     print(f"Server listening @ {hostaddress[0]}:{hostaddress[1]}")
 
     index_html = build_index(logs)
-
+    print(logs["tmp"]["name"])
     while True:
-        read_ready_sockets, _, _ = select.select([listener_socket], [], [], 1)  # Wait up to 1 second
+        try:
+            read_ready_sockets, _, _ = select.select([listener_socket], [], [], 1)  # Wait up to 1 second
 
-        for ready_socket in read_ready_sockets:
-            client_socket, client_address = ready_socket.accept()
+            for ready_socket in read_ready_sockets:
+                client_socket, client_address = ready_socket.accept()
 
-            message = client_socket.recv(4096)
-            path = message.split()[1].decode('utf-8')
-
-            if path == "" or path == "/":
-                http_response = index_html
-                print("INDEX")
-            if "/log/" in path:
+                message = client_socket.recv(4096)
                 try:
-                    log_index = int(path.split("/")[-1])
-                    print(f"Log: {log_index}")
-                    http_response = build_log_page(logs[log_index])
-                    if http_response is None:
-                        http_response = index_html
-                except IndexError:
-                    print("Index out of range")
+                    path = message.split()[1].decode('utf-8')
+                except IndexError as e:
+                    print(f"INDEX ERROR:\n{e}")
+                if path == "" or path == "/":
                     http_response = index_html
-            else:
-                print(path)
+                    print("INDEX")
+                if "/log/" in path:
+                    try:
+                        log_index = path.split("/")[2]
+                        new_path = "/".join(path.split("/")[2:])
+                        back_path = "/".join(path.split("/")[:-1]) if len(path.split("/")) > 3 else "/"
 
-            client_socket.sendall(http_response.encode("utf-8"))
+                        log = logs[log_index]
+                        log_dir = os.path.isdir(log.get("logfile"))
 
-            try:
-                client_socket.close()
-            except OSError:
-                pass
+                        if log_dir:
+                            http_response = build_log_dir_page(log, new_path, back_path)
+                        else:
+                            http_response = build_log_page(log, back_path)
+                        if http_response is None:
+                            http_response = index_html
+                    except IndexError:
+                        print("Index out of range")
+                        http_response = index_html
+                else:
+                    print(path)
+
+                client_socket.sendall(http_response.encode("utf-8"))
+
+                try:
+                    client_socket.close()
+                except OSError:
+                    pass
+        except Exception as e:
+            print(traceback.print_exception(e))

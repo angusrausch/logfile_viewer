@@ -6,8 +6,9 @@
         <br><br>
         {% for log in logs %}
             <div style="padding: 30px;">
-                <a href="/log/{{loop.index0}}">
-                    <div style="background-color: aliceblue; color: black;">
+                <a href="/log/{{ log }}">
+                    <div style="background-color: aliceblue; color: black; min-height: 30px;">
+                        {{log}}
                         {{log.name}}
                     </div>
                 </a>
