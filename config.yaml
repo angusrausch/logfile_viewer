@@ -1,0 +1,11 @@
+hostaddress: localhost
+hostport: 8888
+logs:
+  - name: tmp
+    logfile: ./output.log
+    breaksymbol: ---
+  - name: NGINX
+    logfile: ./nginx/access.log
+    breaksymbol: \n
+  - name: anotherlogfile
+    logfile: ./another.log

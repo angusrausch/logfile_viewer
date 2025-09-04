@@ -1,0 +1,17 @@
+<html>
+    <body style="background-color: black; color: white;">
+        <h1>Welcome To LogFileViewer</h1>
+        <br>
+        <span>Simple method to view log files</span>
+        <br><br>
+        {% for log in logs %}
+            <div style="padding: 30px;">
+                <a href="/log/{{loop.index0}}">
+                    <div style="background-color: aliceblue; color: black;">
+                        {{log.name}}
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </body>
+</html>
