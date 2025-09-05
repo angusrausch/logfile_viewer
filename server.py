@@ -109,8 +109,7 @@ def build_log_dir_page(log, path, back_path):
     else:
         print("ERROR")
 
-
-if __name__ == "__main__":
+def run(stop_event=None):
     hostaddress, logs = load_yaml()
 
     listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,7 +121,7 @@ if __name__ == "__main__":
 
     index_html = build_index(logs)
 
-    while True:
+    while not (stop_event and stop_event.is_set()):
         try:
             read_ready_sockets, _, _ = select.select([listener_socket], [], [], 1)  # Wait up to 1 second
 
@@ -166,3 +165,7 @@ if __name__ == "__main__":
                     pass
         except Exception as e:
             print(traceback.print_exception(e))
+
+
+if __name__ == "__main__":
+    run()

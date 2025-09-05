@@ -9,4 +9,4 @@ logs:
   - name: compressed
     logfile: ./test/compressed.txt.gz
   - name: directory
-    logfile: ./test/directory
+    logfile: ./test/

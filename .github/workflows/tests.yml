@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: 
+      - Ubuntu-Latest
+
+    container:
+      image: python:3.11.4-slim-bullseye
+      options: --workdir /github/workspace
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Tests
+      run: |
+        pytest
