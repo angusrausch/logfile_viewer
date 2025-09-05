@@ -1,0 +1,16 @@
+START_FILE
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+directory_basic
+ENDFILE

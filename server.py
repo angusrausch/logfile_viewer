@@ -6,12 +6,12 @@ import gzip
 from jinja2 import Template
 import traceback
 
-OK_HEADER = """
-HTTP/1.1 200 OK\r
-Content-Type: text/html\r
-Set-Cookie: ServerName=steveserver\r
-\r
-"""
+OK_HEADER = (
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/html\r\n"
+    "Set-Cookie: ServerName=logviewer\r\n"
+    "\r\n"
+)
 
 def load_yaml(yaml_file="./config.yaml"):
     if not os.path.isfile(yaml_file):
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     print(f"Server listening @ {hostaddress[0]}:{hostaddress[1]}")
 
     index_html = build_index(logs)
-    print(logs["tmp"]["name"])
+
     while True:
         try:
             read_ready_sockets, _, _ = select.select([listener_socket], [], [], 1)  # Wait up to 1 second
@@ -135,7 +135,7 @@ if __name__ == "__main__":
                 except IndexError as e:
                     print(f"INDEX ERROR:\n{e}")
                 if path == "" or path == "/":
-                    http_response = index_html
+                    http_response = OK_HEADER + index_html
                     print("INDEX")
                 if "/log/" in path:
                     try:

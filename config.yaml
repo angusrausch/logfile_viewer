@@ -1,11 +1,12 @@
 hostaddress: localhost
 hostport: 8888
 logs:
-  - name: tmp
-    logfile: ./output.log
+  - name: basic
+    logfile: ./test/basic.txt
+  - name: break_char
+    logfile: ./test/break_char.txt
     breaksymbol: ---
-  - name: NGINX
-    logfile: ./nginx/access.log
-    breaksymbol: \n
-  - name: anotherlogfile
-    logfile: ./another.log
+  - name: compressed
+    logfile: ./test/compressed.txt.gz
+  - name: directory
+    logfile: ./test/directory
