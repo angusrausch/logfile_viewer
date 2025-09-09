@@ -11,7 +11,6 @@ def yaml():
     yaml_output = load_yaml()
     host_address = f"{yaml_output[0][0]}:{yaml_output[0][1]}"
     logs = yaml_output[1]
-    print(host_address)
     return host_address, logs
 
 def make_request(address):
@@ -99,7 +98,7 @@ def test_directory(server, yaml):
 
     response = make_request(request_address)
     
-    directory_contents = os.listdir(log.get("logfile"))
+    directory_contents = os.listdir(log.log_file)
 
     for directory_item in directory_contents:
         assert directory_item in response.text
@@ -111,7 +110,7 @@ def test_sub_directory(server, yaml):
 
     response = make_request(request_address)
     
-    directory_contents = os.listdir(log.get("logfile") + "/directory")
+    directory_contents = os.listdir(log.log_file + "/directory")
 
     for directory_item in directory_contents:
         assert directory_item in response.text
